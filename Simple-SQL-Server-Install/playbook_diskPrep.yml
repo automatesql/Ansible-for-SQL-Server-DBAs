@@ -1,0 +1,53 @@
+---
+- name: Initialize and Format disks
+  hosts: sqlservers
+
+  tasks:
+    - name: Get disk facts from Windows hosts
+      community.windows.win_disk_facts:
+
+    - name: Output disk facts
+      ansible.builtin.debug:
+        var: ansible_facts.disks[1]
+      
+
+    # - name: Find and display uninitialized NVMe disks' LUN numbers
+    #   debug:
+    #     var: "Uninitialized ISCSI disk with LUN number: {{ item.number }}"
+    #   when:
+    #     - item.partition_style == 'RAW'  # Disk is uninitialized
+    #     - item.bus_type == 'NVMe'       # Disk's BusType is NVMe
+    #   loop: "{{ ansible_facts.disks }}"
+    #   loop_control:
+    #     label: "{{ item.unique_id }}"
+
+    # - name: Initialize disks
+    #   community.windows.win_initialize_disk:
+    #     disk_number: "{{ item.number }}"
+    #   when:
+    #     - item.partition_style == 'RAW'
+    #     - item.bus_type == 'NVMe'
+    #   loop: "{{ ansible_facts.disks }}"
+    #   loop_control:
+    #     label: "{{ item.unique_id }}"
+
+    # - name: Partition disks
+    #   community.windows.win_partition:
+    #     drive_letter: "{{ item.letter }}"
+    #     disk_number: "{{ item.number }}"
+    #     partition_size: -1
+    #   loop:
+    #     - {letter: 'T', number: 1 }
+    #     - {letter: 'E', number: 2 }
+    #     - {letter: 'F', number: 3 }
+
+    # - name: Format disks
+    #   community.windows.win_format:
+    #     drive_letter: "{{ item.letter }}"
+    #     file_system: REFS
+    #     new_label: "{{ item.label }}"
+    #     allocation_unit_size: 65536
+    #   loop:
+    #     - {letter: 'T', label: "TEMPDB" }
+    #     - {letter: 'E', label: "DATA" }
+    #     - {letter: 'F', label: "LOG" }

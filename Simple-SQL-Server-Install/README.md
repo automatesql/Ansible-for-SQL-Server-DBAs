@@ -10,6 +10,7 @@ This is a simple SQL Server install using SQL Server 2022 Developer edition.
     - Disk 3 - Log
 - SRV3 (Ansible Controller)
   - Windows Subsystem for Linux with Ubuntu Distribution
+  - Visual Studio Code with Ansible extension
 
 ### 1. If you're using WSL with an Ubuntu distribution, make sure Kerberos is configured.  
 
@@ -25,5 +26,7 @@ sudo dpkg-reconfigure krb5-config
 ### 2. Inventory
 
 ### 3. Preparing Disks and reviewing facts.
+- playbook_diskPrep.yml
+
 
 ### 4. Installing SQL Server 
