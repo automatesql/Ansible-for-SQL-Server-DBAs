@@ -24,6 +24,7 @@ sudo dpkg-reconfigure krb5-config
 `
 
 ### 2. Inventory
+- hosts.ini
 
 ### 3. Preparing Disks and reviewing facts.
 - playbook_diskPrep.yml
