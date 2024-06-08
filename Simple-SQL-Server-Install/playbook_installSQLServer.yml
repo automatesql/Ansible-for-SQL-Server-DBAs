@@ -20,9 +20,9 @@
         name: 'MSSQLSERVER'
       register: service_info
 
-      # end the play if it does
-    # - meta: end_play
-    #  when: service_info.exists
+    - name: End play if default instance already exists.
+      ansible.builtin.meta: end_play
+      when: service_info.exists
 
     - name: Set Windows power plan to high performance
       community.windows.win_power_plan:

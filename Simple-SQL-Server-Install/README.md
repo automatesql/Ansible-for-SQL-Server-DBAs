@@ -12,7 +12,7 @@ This is a simple SQL Server install using SQL Server 2022 Developer edition.
   - Windows Subsystem for Linux with Ubuntu Distribution
   - Visual Studio Code with Ansible extension
 
-### 1. If you're using WSL with an Ubuntu distribution, make sure Kerberos is configured.  
+### 1. If you're using WSL with an Ubuntu distribution, make sure Kerberos is configured.
 
 https://ubuntu.com/server/docs/how-to-set-up-basic-workstation-authentication
 --Kerberos support
