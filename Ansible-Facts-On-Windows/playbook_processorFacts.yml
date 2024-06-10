@@ -1,0 +1,42 @@
+---
+- name: Working with facts
+  hosts: sqlservers
+
+  tasks:
+    - name: Print all facts
+      ansible.builtin.debug:
+        var: ansible_facts
+      tags: AllFacts
+
+    - name: Print processor core facts
+      ansible.builtin.debug:
+        var: ansible_facts.processor_cores
+      tags: ProcessorCores
+
+    - name: Print processor count facts
+      ansible.builtin.debug:
+        var: ansible_facts.processor_count
+      tags: ProcessorCount
+
+    - name: Print processor core facts
+      ansible.builtin.debug:
+        msg: "The number of processor cores is {{ ansible_facts.processor_cores }} and the number of processors is {{ ansible_facts.processor_count }}"
+      tags: CustomMessage
+
+    # Get number of sockets.  We're doing an integer division with two //
+    - name: Print number of sockets
+      ansible.builtin.debug:
+        msg: "The number of processor sockets is {{ (ansible_facts.processor_count) // (ansible_facts.processor_cores) }}. "
+      tags: ProcessorSockets
+
+    # Let's create a custom fact for the number of sockets
+    - name: Custom fact for number of sockets
+      ansible.builtin.set_fact:
+        processor_sockets: "{{ (ansible_facts.processor_count) // (ansible_facts.processor_cores) }}"
+      tags: SetFact
+
+    # Print the custom fact
+    - name: Print custom fact
+      ansible.builtin.debug:
+        var: processor_sockets
+      tags: PrintCustomFact
