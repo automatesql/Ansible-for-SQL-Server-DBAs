@@ -1,5 +1,5 @@
-# Quick and easy examples of gathering facts about a managed Windows node.
-Examples playbooks to gather and use facts.
+# Quick and easy examples of using templates when installing SQL Server.
+Examples which introduce ansible templates, dynamic expressions, and the ansible.cfg config file.
 
 ## Virtual Lab Environment using VMware Workstation Pro.  All VMs use Windows Server 2022 Standard Evaluation Edition.
 - Windows Domain - DC1 (HOMELAB.LOCAL)
@@ -27,8 +27,5 @@ sudo dpkg-reconfigure krb5-config
 ### 2. Inventory
 - hosts.ini
 
-### 3. Working with facts, tags, and Jinja2 expressions.
-- playbook_processorFacts.yml
-
-## 4. Run the playbook
-ansible-playbook -i hosts.ini playbook_installSQLServer_templates.yml -u Username@DOMAIN.LOCAL --ask-pass --extra-vars="rl_mssql_tempdbfilecount=8 rl_mssql_sapwd=YourSAPassword"
+### 3. Working with ansible templates.
+- playbook_installSQLServer_withTemplates.yml
