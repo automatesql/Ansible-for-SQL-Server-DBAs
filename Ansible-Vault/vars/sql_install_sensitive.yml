@@ -1,0 +1,4 @@
+---
+rl_mssql_sapwd: "Re@llyS4cureP@ss"
+rl_mssql_sysadminaccount: "DOMAIN\\UserAccount" 
+

@@ -1,0 +1,94 @@
+---
+ # Initialize disks to prep for the install
+- name: Initialize disks
+  ansible.builtin.import_playbook: playbook_diskPrep.yml
+
+- name: Install SQL Server
+  hosts: sqlservers
+
+  vars_files:
+    - vars/sql_install_sensitive.yml
+    - vars/sql_install.yml
+
+  handlers:
+    - name: Wait for ISO to mount
+      ansible.builtin.pause:
+        seconds: 5
+      when: disk_image_out.changed
+
+  
+  tasks:
+    - name: Determine if the default instance exists.
+      ansible.windows.win_service:
+        name: 'MSSQLSERVER'
+      register: service_info
+
+    - name: End play if default instance already exists.
+      ansible.builtin.meta: end_play
+      when: service_info.exists
+
+
+    - name: Set Windows power plan to high performance
+      community.windows.win_power_plan:
+        name: high performance
+
+    - name: Create temp folder on target
+      ansible.windows.win_file:
+        path: 'C:\temp'
+        state: directory
+      when:
+        - not service_info.exists
+
+    - name: Copy ISO to target
+      ansible.windows.win_copy:
+        src: '/home/luke/ISO/SQL2022/enu_sql_server_2022_developer_edition_x64_dvd_7cacf733.iso'
+        dest: 'C:\temp\'
+      when:
+        - not service_info.exists
+
+    - name: Copy the configuration.ini file to target
+      ansible.builtin.template:
+        src: './config2022.j2'
+        dest: 'C:\temp\Configuration.ini'
+      when:
+        - not service_info.exists
+
+    - name: Mount ISO
+      community.windows.win_disk_image:
+        image_path: 'C:\temp\enu_sql_server_2022_developer_edition_x64_dvd_7cacf733.iso'
+        state: present
+      register: disk_image_out
+      when:
+        - not service_info.exists
+
+    - name: Debug disk_image_out
+      ansible.builtin.debug:
+        var: disk_image_out.mount_paths[0]
+      when:
+        - not service_info.exists
+
+    - name: SQL Server SA password
+      ansible.builtin.set_fact:
+        sa_password_switch: "{{ '/SAPWD={{ rl_mssql_sapwd }}' }}"
+      when:
+        - not service_info.exists
+
+    - name: Install Default instance
+      ansible.windows.win_command:
+        cmd: '{{ disk_image_out.mount_paths[0] }}setup.exe /ConfigurationFile=C:\temp\Configuration.ini {{ sa_password_switch }}'
+      when:
+        - not service_info.exists
+
+    - name: Unmount ISO
+      community.windows.win_disk_image:
+        image_path: 'C:\temp\enu_sql_server_2022_developer_edition_x64_dvd_7cacf733.iso'
+        state: absent
+      when:
+        - not service_info.exists
+
+    - name: Cleanup temp directory
+      ansible.windows.win_file:
+        path: 'C:\temp'
+        state: absent
+      when:
+        - not service_info.exists
