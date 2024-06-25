@@ -28,4 +28,3 @@ sudo dpkg-reconfigure krb5-config
 - hosts.ini
 
 ### 3. Working with ansible-vault.
-- /vars/sql_install.yml
