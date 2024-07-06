@@ -1,0 +1,10 @@
+---
+- name: Firewall rule to allow SQL Server access
+  community.windows.win_firewall_rule:
+    name: "{{ rl_mssql_instance_name }}"
+    localport : "{{ rl_mssql_instance_port }}"
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes

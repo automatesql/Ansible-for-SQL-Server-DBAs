@@ -1,0 +1,9 @@
+---
+- name: SQL Server SA password
+  ansible.builtin.set_fact:
+    sa_password_switch: "{{ '/SAPWD={{ rl_mssql_sapwd }}' }}"
+
+- name: Install Default instance
+  ansible.windows.win_command:
+    cmd: '{{ disk_image_out.results[0].mount_paths[0] }}setup.exe /ConfigurationFile=C:\temp\Configuration.ini {{ sa_password_switch }}'
+   

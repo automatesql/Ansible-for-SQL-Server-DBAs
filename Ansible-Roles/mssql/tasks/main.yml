@@ -1,0 +1,31 @@
+---
+# tasks file for mssql
+- name: Partition and Format disks
+  ansible.builtin.include_tasks: diskPrep.yml
+  tags: diskprep
+
+- name: Prerequisites
+  ansible.builtin.include_tasks: prerequisites.yml
+  tags: prereq
+
+- name: Mount ISO
+  ansible.builtin.include_tasks: isoMount.yml
+  tags: iso
+
+- name: Install SQL Server
+  ansible.builtin.include_tasks: install.yml
+  tags: install
+
+- name: Configure SQL Server
+  ansible.builtin.include_tasks: config.yml
+  tags: config
+
+- name: Add firewall rule
+  ansible.builtin.include_tasks: firewallrule.yml
+  tags: firewall
+
+- name: Dismount ISO
+  ansible.builtin.include_tasks: isoDismount.yml
+
+- name: Cleanup files
+  ansible.builtin.include_tasks: cleanup.yml

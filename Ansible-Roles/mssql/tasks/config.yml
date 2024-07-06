@@ -1,0 +1,41 @@
+---
+- name: Set SQL Server Max Memory
+  ansible.windows.win_dsc:
+    resource_name: SqlMemory
+    Ensure: "Present"
+    DynamicAlloc: true
+    ServerName: "localhost"
+    InstanceName: "{{ rl_mssql_instance_name }}"
+
+- name: Set SQL Server instance maxdop
+  ansible.windows.win_dsc:
+    resource_name: SQLMaxDop
+    DynamicAlloc: true
+    ServerName: "localhost"
+    InstanceName: "{{ rl_mssql_instance_name }}"
+
+- name: Set backup compression
+  ansible.windows.win_dsc:
+    resource_name: SQLConfiguration
+    OptionName: "backup compression default"
+    OptionValue: 1
+    ServerName: "localhost"
+    InstanceName: "{{ rl_mssql_instance_name }}"
+
+- name: Set SQL Server instance cost threshold for parallelism
+  ansible.windows.win_dsc:
+    resource_name: SQLConfiguration
+    OptionName: "cost threshold for parallelism"
+    OptionValue: 50
+    ServerName: "localhost"
+    InstanceName: "{{ rl_mssql_instance_name }}"
+
+- name: Set SQL Server instance port
+  ansible.windows.win_dsc:
+    resource_name: SqlProtocolTcpIp
+    IpAddressGroup: "IPAll"
+    Enabled: true
+    SuppressRestart: false
+    TCPPort: "{{ rl_mssql_instance_port }}"
+    ServerName: "localhost"
+    InstanceName: "{{ rl_mssql_instance_name }}"

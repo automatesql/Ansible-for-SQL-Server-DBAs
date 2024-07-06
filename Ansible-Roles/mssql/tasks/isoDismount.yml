@@ -1,0 +1,7 @@
+---
+- name: unmount SQL iso
+  community.windows.win_disk_image:
+    image_path: '{{ rl_mssql_temp_folder }}\{{ item.name }}'
+    state: absent
+  with_items:
+    - "{{ rl_mssql_iso_source }}"

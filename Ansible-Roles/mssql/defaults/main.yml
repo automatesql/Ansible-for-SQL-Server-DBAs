@@ -1,0 +1,42 @@
+---
+# defaults file for mssql
+rl_mssql_temp_folder: C:\temp
+rl_mssql_share: /home/luke/ISO/
+rl_mssql_enableupdates: "true"
+rl_mssql_features: SQLENGINE,REPLICATION,FULLTEXT,IS
+rl_mssql_instance_name: MSSQLSERVER
+rl_mssql_installshareddir: C:\Program Files\Microsoft SQL Server
+rl_mssql_installsharedwowdir: C:\Program Files (x86)\Microsoft SQL Server
+rl_mssql_sqlcollation: SQL_Latin1_General_CP1_CI_AS
+rl_mssql_svcaccount: NT Service\MSSQLSERVER
+rl_mssql_svcpassword:
+rl_mssql_svcagentaccount: NT Service\SQLSERVERAGENT
+rl_mssql_svcagentpassword:
+rl_mssql_installdb_path: "E:"
+rl_mssql_instance_dir: C:\Program Files\Microsoft SQL Server
+rl_mssql_userdb_path: E:\SQLDATA
+rl_mssql_userdblog_path: F:\SQLDATA
+rl_mssql_tempdb_path: T:\SQLDATA
+rl_mssql_tempdblog_path: T:\SQLDATA
+rl_mssql_backup_path: T:\BACKUP
+rl_mssql_tempdblogfilesize: 256
+rl_mssql_tempdblogfilegrowth: 256
+rl_mssql_tempdbfilecount: 4
+rl_mssql_tempdbfilesize: 256
+rl_mssql_tempdbfilegrowth: 256
+rl_mssql_issvcaccount: NT Service\MsDtsServer160
+rl_mssql_issvcpassword:
+rl_mssql_sqlsvcinstantfileinit: "true"
+rl_mssql_instance_port: 1433
+
+
+
+rl_mssql_iso_source:
+  - name: enu_sql_server_2022_developer_edition_x64_dvd_7cacf733.iso
+    version: SQL2022
+    config: config2022.j2
+  
+rl_mssql_update_source:
+  - name: SQLServer2022-KB5036432-x64.exe
+    version: SQL2022
+    

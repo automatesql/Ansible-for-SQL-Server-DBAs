@@ -1,0 +1,75 @@
+---
+- name: Determine if the default instance exists.
+  ansible.windows.win_service:
+    name: 'MSSQLSERVER'
+  register: service_info
+
+- name: End play if default instance already exists.
+  ansible.builtin.meta: end_play
+  when: service_info.exists
+
+- name: Remove any pending DSC mof files
+  ansible.windows.win_shell: Remove-DscConfigurationDocument -Stage Pending -Force
+
+- name: Set power plan to high performance
+  community.windows.win_power_plan:
+    name: high performance
+
+- name: Copy dsc modules to target
+  ansible.windows.win_copy:
+    src: "{{ item }}"
+    dest: 'C:\Program Files\WindowsPowerShell\Modules\'
+    remote_src: false
+  with_items:
+    - '../ComputerManagementDsc'
+    - '../SqlServerDsc'
+
+- name: Create temp folder on target
+  ansible.windows.win_file:
+    path: '{{ rl_mssql_temp_folder }}'
+    state: directory
+
+- name: Create the updates folder in temp on target
+  ansible.windows.win_file:
+    path: '{{ rl_mssql_temp_folder }}\updates'
+    state: directory
+  when:
+    - rl_mssql_enableupdates == "true"
+
+- name: Copy SQL Server iso
+  ansible.windows.win_copy:
+    src: '{{ rl_mssql_share }}/{{ item.version }}/{{ item.name }}'
+    dest: '{{ rl_mssql_temp_folder }}\'
+    remote_src: false
+  with_items:
+    - "{{ rl_mssql_iso_source }}"
+ 
+- name: Copy SQL Server update
+  ansible.windows.win_copy:
+    src: '{{ rl_mssql_share }}/{{ item.version }}/{{ item.name }}'
+    dest: '{{ rl_mssql_temp_folder }}\updates\{{ item.name }}'
+    remote_src: false
+  with_items:
+    - "{{ rl_mssql_update_source }}"
+  when:
+    - rl_mssql_enableupdates == "true"
+
+- name: Generate configuration ini
+  template:
+    src: '{{ item.config }}'
+    dest: '{{ rl_mssql_temp_folder }}\Configuration.ini'
+  with_items:
+    - "{{ rl_mssql_iso_source }}"
+
+- name: Create an instance name variable that includes localhost.  Default instance.
+  set_fact:
+    instance_name_var: "localhost"
+  when:
+    - rl_mssql_instance_name == "MSSQLSERVER"
+    
+- name: Return instance_name_var
+  debug:
+    msg: "{{ instance_name_var }}"
+  
+
+

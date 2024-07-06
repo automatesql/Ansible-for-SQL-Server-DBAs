@@ -1,0 +1,3 @@
+---
+rl_mssql_sapwd: "YourSAPassword"
+rl_mssql_sysadminaccount: "YourDomain\\YourUserName"

@@ -1,0 +1,14 @@
+- name: delete source files
+  ansible.windows.win_file:
+    path: '{{ rl_mssql_temp_folder }}'
+    state: absent
+
+
+- name: Remove DSC modules
+  ansible.windows.win_file:
+    path: '{{ item }}'
+    state: absent
+  with_items:
+    - C:\Program Files\WindowsPowerShell\Modules\ComputerManagementDsc
+    - C:\Program Files\WindowsPowerShell\Modules\SqlServerDsc
+  

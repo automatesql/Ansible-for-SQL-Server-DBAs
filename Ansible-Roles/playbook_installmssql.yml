@@ -1,0 +1,9 @@
+---
+- name: Install SQL Server using mssql role
+  hosts: sqlservers
+  gather_facts: true
+
+  tasks:
+   - name: Import the mssql role
+     ansible.builtin.import_role:
+      name: mssql
