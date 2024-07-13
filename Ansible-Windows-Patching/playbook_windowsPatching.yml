@@ -1,0 +1,15 @@
+---
+- name: Windows Updates
+  hosts: sqlservers
+
+  tasks:
+    - name: Install updates
+      ansible.windows.win_updates:
+        server_selection: default
+        state: installed
+        category_names:
+          - SecurityUpdates
+        accept_list:
+          - KB5040939
+        log_path: C:\ansible_wu.txt
+        reboot: true
