@@ -1,0 +1,27 @@
+---
+- name: Download and extract DSC resources
+  ansible.builtin.import_playbook: playbook_DSCResources.yml
+
+
+- name: Add aliases to target host
+  hosts: sqlservers
+  gather_facts: true
+
+  tasks:
+    - name: Copy dsc modules to target
+      ansible.windows.win_copy:
+        src: "{{ item }}"
+        dest: 'C:\Program Files\WindowsPowerShell\Modules\'
+        remote_src: false
+      with_items:
+        - './SqlServerDsc'
+
+    - name: Create aliases
+      ansible.windows.win_dsc:
+        resource_name: SqlAlias
+        name: "SRV2\\CENTRAL"
+        ServerName: 'SRV2.HOMELAB.LOCAL'
+        Protocol: 'TCP'
+        TcpPort: 1533
+        UseDynamicTcpPort: false
+        Ensure: present

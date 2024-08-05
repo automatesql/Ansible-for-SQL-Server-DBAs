@@ -1,0 +1,16 @@
+---
+- name: Download DSC resources
+  hosts: localhost
+
+  tasks:
+    - name: Download and extract SqlServerDsc
+      ansible.builtin.unarchive:
+        src: https://www.powershellgallery.com/api/v2/package/SqlServerDsc/16.6.0
+        dest: ./SqlServerDsc
+        remote_src: true
+
+    - name: Download and extract ComputerManagementDSC
+      ansible.builtin.unarchive:
+        src: https://www.powershellgallery.com/api/v2/package/ComputerManagementDsc/9.1.0
+        dest: ./ComputerManagementDsc
+        remote_src: true
