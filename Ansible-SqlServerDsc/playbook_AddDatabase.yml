@@ -1,0 +1,26 @@
+---
+- name: Download and extract DSC resources
+  ansible.builtin.import_playbook: playbook_DSCResources.yml
+
+- name: Add databases to target host
+  hosts: sqlservers
+  gather_facts: true
+
+  tasks:
+    - name: Copy dsc modules to target
+      ansible.windows.win_copy:
+        src: "{{ item }}"
+        dest: 'C:\Program Files\WindowsPowerShell\Modules\'
+        remote_src: false
+      with_items:
+        - './SqlServerDsc'
+
+    - name: Create databases
+      ansible.windows.win_dsc:
+        resource_name: SqlDatabase
+        Ensure: "Present"
+        Name: "{{ item }}"
+        ServerName: "localhost"
+        InstanceName: "{{ rl_mssql_instance_name }}"
+        OwnerName: "{{ rl_mssql_sa_name }}"
+      with_items: "{{ rl_mssql_database_list.split(',') }}"
