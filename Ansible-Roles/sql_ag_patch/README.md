@@ -31,9 +31,7 @@ Example playbook.
   hosts: sqlservers
   gather_facts: true
   any_errors_fatal: true
-  # serial: 1
-  # debugger: always
-
+ 
   tasks:
     - name: Import the sql_ag_patch role
       ansible.builtin.import_role:
