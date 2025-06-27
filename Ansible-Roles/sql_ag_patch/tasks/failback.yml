@@ -1,0 +1,14 @@
+---
+- name: Failover AG from the primary back to the original primary
+  ansible.windows.win_powershell:
+    script: "{{ lookup('file', 'failback_ag.ps1') }}"
+    parameters:
+      AgCurrentPrimary: "{{ ag_current_primary }}"
+      AgName: "{{ ag_name }}"
+      DesiredSqlVersion: "{{ desired_sql_version }}"
+      NewPrimary: "{{ new_primary }}"
+  register: failback_result
+
+- name: Debug failback
+  ansible.builtin.debug:
+    msg: "{{ failback_result }}" # .host_out

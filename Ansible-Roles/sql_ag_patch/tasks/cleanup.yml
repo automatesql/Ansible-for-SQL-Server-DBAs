@@ -1,0 +1,12 @@
+---
+- name: Delete source files
+  ansible.windows.win_file:
+    path: "{{ sql_patch_temp_folder }}"
+    state: absent
+
+- name: Remove SqlServer modules
+  ansible.windows.win_file:
+    path: "C:\\Program Files\\WindowsPowerShell\\Modules\\SqlServer"
+    state: absent
+  when:
+    - remove_sqlserver_module

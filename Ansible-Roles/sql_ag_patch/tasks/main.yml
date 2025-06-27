@@ -1,0 +1,70 @@
+---
+# tasks file for sql_ag_patch
+- name: Prerequisites
+  ansible.builtin.include_tasks: prerequisites.yml
+  tags: prereq
+
+- name: Identify Primary node
+  ansible.builtin.include_tasks: identify_primary.yml
+  tags: get_primary
+
+- name: Return primary node
+  ansible.builtin.debug:
+    msg: "{{ ag_current_primary }}"
+
+- name: Check fact server_instance
+  ansible.builtin.debug:
+    msg: "{{ server_instance }}"
+
+- name: Validate AG health state prior to installing updates
+  ansible.builtin.include_tasks: validate.yml
+  vars:
+    post_validation: false
+  when:
+    - ag_current_primary == server_instance
+
+- name: Patch secondaries
+  ansible.builtin.include_tasks: patch_secondaries.yml
+  when:
+    - ag_current_primary != server_instance
+    - is_patch_needed
+  tags: patch_secondary
+
+# - name: Check vars hostname
+#   ansible.builtin.debug:
+#     msg: "{{ ansible_hostname }}"
+
+# - name: Check vars ag_name
+#   ansible.builtin.debug:
+#     msg: "{{ ag_name }}"
+
+# Only failover and failback if the primary needs to be updated.
+- name: Patch primary if required
+  when:
+    - ag_current_primary == server_instance
+    - is_patch_needed
+  block:
+    - name: Failover to new primary
+      ansible.builtin.include_tasks: failover.yml
+
+    - name: Check fact new primary
+      ansible.builtin.debug:
+        msg: "{{ new_primary }}"
+
+    - name: Patch former primary
+      ansible.builtin.include_tasks: patch_secondaries.yml
+
+    - name: Failback to the original primary
+      ansible.builtin.include_tasks: failback.yml
+      when:
+        - sql_ag_failback
+
+- name: Validate final state of AG
+  ansible.builtin.include_tasks: validate.yml
+  vars:
+    post_validation: true
+
+- name: Cleanup files
+  ansible.builtin.include_tasks: cleanup.yml
+  when:
+    - current_sql_version == desired_sql_version

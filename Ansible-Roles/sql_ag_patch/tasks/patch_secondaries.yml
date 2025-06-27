@@ -1,0 +1,65 @@
+---
+# We need to connect to the primary replica to set this secondary to manual failover
+
+- name: Patch secondary replicas block - only run if version mismatch
+  when:
+    - is_patch_needed
+  block:
+    - name: Change secondary replica failover mode to manual
+      ansible.windows.win_powershell:
+        script: "{{ lookup('file', 'change_failover_mode.ps1') }}"
+        parameters:
+          SqlInstanceName: "{{ sql_instance_name }}"
+          AgName: "{{ ag_name }}"
+          AgCurrentPrimary: "{{ ag_current_primary }}"
+          NewPrimary: "{{ new_primary }}" # If the primary has changed, we'll need to connect to it vs AgCurrentPrimary
+          HostName: "{{ ansible_hostname }}"
+          TargetMode: "Manual" # Use "Manual" or "Automatic" as needed
+      register: change_failover_result
+
+    # - name: Return change failover type result
+    #   ansible.builtin.debug:
+    #     msg: "{{ change_failover_result }}"
+
+    # CHECK FOR PENDING REBOOT
+
+    - name: Install SQL Updates on secondaries
+      ansible.windows.win_command:
+        cmd: "{{ sql_patch_temp_folder }}updates\\{{ sql_patch_filename }} {{ sql_patch_args }} "
+      register: patch_out
+      failed_when: "'FAILED' in patch_out.stderr"
+
+    - name: Reboot
+      ansible.windows.win_reboot:
+        reboot_timeout: "{{ sql_reboot_timeout }}"
+      when:
+        - reboot_secondary
+
+    - name: Wait for SQL Server to become available.
+      ansible.windows.win_wait_for:
+        port: "{{ sql_port }}"
+        delay: 10
+        timeout: 600
+
+    # - name: Get new SQL Server version
+    #   ansible.windows.win_powershell:
+    #     script: "{{ lookup('file', 'get_sqlversion.ps1') }}"
+    #     parameters:
+    #       ServerInstance: "{{ server_instance }}"
+    #   register: new_sql_version_info
+
+    # - name: Return new SQL Server version
+    #   ansible.builtin.debug:
+    #     msg: "SQL Server Version: {{ new_sql_version_info.output[0] }}"
+
+    - name: Change secondary replica failover mode to automatic if changed previously
+      ansible.windows.win_powershell:
+        script: "{{ lookup('file', 'change_failover_mode.ps1') }}"
+        parameters:
+          SqlInstanceName: "{{ sql_instance_name }}"
+          AgName: "{{ ag_name }}"
+          AgCurrentPrimary: "{{ ag_current_primary }}"
+          NewPrimary: "{{ new_primary }}" # If the primary has changed, we'll need to connect to it vs AgCurrentPrimary
+          HostName: "{{ ansible_hostname }}"
+          TargetMode: "Automatic" # Use "Manual" or "Automatic" as needed
+      when: change_failover_result.changed

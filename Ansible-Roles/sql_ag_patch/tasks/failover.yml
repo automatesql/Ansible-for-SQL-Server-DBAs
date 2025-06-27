@@ -1,0 +1,28 @@
+---
+# failover only if the primary requires the updates
+
+- name: Set PowerShell path fact for the primary
+  ansible.builtin.set_fact:
+    ps_path_ag_primary: "SQLSERVER:\\Sql\\{% if 'DEFAULT' in sql_instance_name %}{{ ansible_hostname }}\\{{ sql_instance_name }}{% else %}{{ server_instance }}{%
+      endif %}\\AvailabilityGroups\\{{  ag_name }}\\AvailabilityReplicas"
+
+# - name: Return ps_path_ag_primary fact
+#   ansible.builtin.debug:
+#     msg: "{{ ps_path_ag_primary }}"
+
+- name: Failover AG from the current primary to a patched synchronous secondary
+  ansible.windows.win_powershell:
+    script: "{{ lookup('file', 'failover_ag.ps1') }}"
+    parameters:
+      PsPathAgPrimary: "{{ ps_path_ag_primary }}"
+      DesiredSqlVersion: "{{ desired_sql_version }}"
+      AgName: "{{ ag_name }}"
+  register: failover_result
+
+# - name: Return failover result
+#   ansible.builtin.debug:
+#     msg: "{{ failover_result }}"
+
+- name: Set new primary fact
+  ansible.builtin.set_fact:
+    new_primary: "{{ failover_result.host_out | trim }}"

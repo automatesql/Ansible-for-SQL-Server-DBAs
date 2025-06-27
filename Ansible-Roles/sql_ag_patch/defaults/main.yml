@@ -1,0 +1,33 @@
+---
+# defaults file for sql_ag_patch
+
+# Where to get the patch
+sql_patch_source: "\\\\SRV1.SANDBOX.LOCAL\\SQL_Updates\\SQL2022\\"
+sql_patch_filename: "SQLServer2022-KB5054531-x64.exe"
+sql_patch_checksum: "6E58447853AF96373BB838E7E7A0B41237CC8DAC2EBDCB78E13A268BE27B2694"
+
+
+# Arguments to run with the patch installer (silent, accept license, etc.)  You can also specify which instance to update.
+# sql_instance_name_to_patch is a fact which is set in the prerequisites.yml file.
+sql_patch_args: "/quiet /IAcceptSQLServerLicenseTerms /Action=Patch /InstanceName={{ sql_instance_name_to_patch }}"
+
+# The name of the Availability Group
+ag_name: "SANDBOXAG"
+
+# Optional: Whether to fail back to the original primary after patching
+sql_ag_failback: true
+
+# Optional: Remove SqlServer module.
+remove_sqlserver_module: true
+
+# Optional: Reboot secondary
+reboot_secondary: true
+
+# Time to wait for reboots (in seconds) - ignored if reboot_secondary is false
+sql_reboot_timeout: 1800
+
+# Temp folder to copy the update to on each host
+sql_patch_temp_folder: "C:\\temp\\"
+
+# Compare existing version to expected after applying the patch.
+desired_sql_version: "16.0.4195" # "16.0.4175" # "16.0.4185"

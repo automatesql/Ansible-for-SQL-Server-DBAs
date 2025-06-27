@@ -1,16 +1,37 @@
 ---
-- name: Download DSC resources
+- name: Download DSC resources and SqlServer PowerShell module
   hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_shell_type: sh
+    ansible_shell_executable: /bin/bash
 
   tasks:
-    - name: Download and extract SqlServerDsc
-      ansible.builtin.unarchive:
-        src: https://www.powershellgallery.com/api/v2/package/SqlServerDsc/16.6.0
-        dest: ./SqlServerDsc
-        remote_src: true
+    - name: Install unzip on the ansible control node
+      ansible.builtin.apt:
+        name: unzip
+        state: present
+        update_cache: true
+      become: true
 
-    - name: Download and extract ComputerManagementDSC
-      ansible.builtin.unarchive:
-        src: https://www.powershellgallery.com/api/v2/package/ComputerManagementDsc/9.1.0
-        dest: ./ComputerManagementDsc
-        remote_src: true
+  tasks:
+     - name: Create the SqlServerDsc and SqlServer directories on the ansible control node
+       ansible.builtin.file:
+         path: "{{ item }}"
+         mode: '0755'
+         state: directory
+       loop:
+         - ./SqlServerDsc
+         - ./SqlServer
+         - .ComputerManagementDsc
+
+   # Using a loop here just in case you need to download additional resources in the future.
+     - name: Download and extract SqlServerDsc and SqlServer Powershell module
+       ansible.builtin.unarchive:
+         src: "{{ item.Source }}"
+         dest: "{{ item.Destination }}"
+         remote_src: true
+       loop:
+         - { Source: "https://www.powershellgallery.com/api/v2/package/SqlServerDsc/17.1.0", Destination: "./SqlServerDsc" }
+         - { Source: "https://www.powershellgallery.com/api/v2/package/SqlServer", Destination: "./SqlServer" }
+         - { Source: "https://www.powershellgallery.com/api/v2/package/ComputerManagementDsc/9.1.0", Destination: "./ComputerManagementDsc" }

@@ -1,0 +1,28 @@
+---
+# the SqlServer powershell module is needed on the managed machines
+- name: Identify the current AG primary
+  ansible.windows.win_powershell:
+    script: |
+      [CmdletBinding()]
+      param(
+        [Parameter(Mandatory=$true)]
+        [string]$SqlInstanceName,
+
+        [Parameter(Mandatory=$true)]
+        [string]$AgName
+      )
+      $ErrorActionPreference = 'Stop'
+      import-module sqlserver
+      $AGPath = "SQLSERVER:\SQL\LOCALHOST\$SqlInstanceName\AvailabilityGroups\"
+      dir -path $AGPath | Where-Object {$_.Name -eq "$AgName" } | select-object -ExpandProperty PrimaryReplicaServerName
+
+      #this never changes a host only reads
+      $Ansible.Changed = $false
+    parameters:
+      SqlInstanceName: "{{ sql_instance_name }}"
+      AgName: "{{ ag_name }}"
+  register: ag_primary_info
+
+- name: Set a fact with the primary hostname
+  ansible.builtin.set_fact:
+    ag_current_primary: "{{ ag_primary_info.output[0] | trim }}"

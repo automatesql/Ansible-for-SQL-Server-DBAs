@@ -1,0 +1,101 @@
+---
+- name: Verify SHA256 checksum of exe
+  block:
+    - name: Get SHA256 checksum of exe
+      ansible.windows.win_stat:
+        path: "{{ sql_patch_source }}{{ sql_patch_filename }}"
+        get_checksum: true
+        checksum_algorithm: sha256
+      register: sha256_checksum
+
+    - name: Check if checksum matches
+      ansible.builtin.assert:
+        that:
+          - sha256_checksum.stat.checksum | lower == sql_patch_checksum | lower
+        fail_msg: "Checksum mismatch! Computed: {{ sha256_checksum.stat.checksum | lower }}, Expected: {{ sql_patch_checksum | lower }}"
+  rescue:
+    - name: Fail the playbook explicitly
+      ansible.builtin.fail:
+        msg: "Patch checksum verification failed. Aborting installation!"
+
+- name: Copy SqlServer module to target
+  ansible.windows.win_copy:
+    src: "{{ item }}"
+    dest: "C:\\Program Files\\WindowsPowerShell\\Modules\\"
+    remote_src: false
+  loop:
+    - "../SqlServer"
+
+# fact building.  Facts are used to ensure idemotency is enforced.
+- name: Set the server_instance variable conditionally
+  ansible.builtin.set_fact:
+    server_instance: "{% if 'DEFAULT' in sql_instance_name %}{{ ansible_hostname }}{% else %}{{ ansible_hostname }}\\{{ sql_instance_name }}{% endif %}"
+
+- name: Get current SQL Server version
+  ansible.windows.win_powershell:
+    script: "{{ lookup('file', 'get_sqlversion.ps1') }}"
+    parameters:
+      ServerInstance: "{{ server_instance }}"
+  register: sql_version_info
+
+- name: Set a fact for the version
+  ansible.builtin.set_fact:
+    current_sql_version: "{{ sql_version_info.output[0] }}"
+
+- name: Compare SQL Server Versions
+  ansible.builtin.set_fact:
+    is_patch_needed: >-
+      {{
+        (current_sql_version.split('.')[0] == desired_sql_version.split('.')[0])
+        and (current_sql_version.split('.') | map('int') | list < desired_sql_version.split('.') | map('int') | list)
+      }}
+
+- name: Return is patch needed fact
+  ansible.builtin.debug:
+    msg: "Is patch needed: {{ is_patch_needed }}"
+
+- name: Assert SQL Server version is valid for patching
+  ansible.builtin.assert:
+    that:
+      - current_sql_version.split('.') | map('int') | list <= desired_sql_version.split('.') | map('int') | list
+    fail_msg: >-
+      Patching is not possible. SQL Server version mismatch detected:
+      - **Current Version:** {{ current_sql_version }}
+      - **Desired Version:** {{ desired_sql_version }}
+      {% if current_sql_version.split('.')[0] != desired_sql_version.split('.')[0] %}
+      - **Major version mismatch!** The patch cannot be applied across major SQL Server versions.
+      {% else %}
+      - **Patch version too high!** The patch is designed for an older version than what is installed.
+      {% endif %}
+    success_msg: "SQL Server Major version check passed. Proceeding with patching."
+
+- name: Initialize fact for new_primary with default
+  ansible.builtin.set_fact:
+    new_primary: "default_value"
+
+# Most of the PowerShell commandlets used in this role use PowerShell paths which require DEFAULT as the instance name for default instances.
+# However, the patch exe expects the instance name to be MSSQLSERVER if we're patching the default instance.  So we need another fact to handle this.
+- name: Set a fact for the instance name to patch
+  ansible.builtin.set_fact:
+    sql_instance_name_to_patch: "{% if 'DEFAULT' in sql_instance_name %}MSSQLSERVER{% else %}{{ sql_instance_name }}{% endif %}"
+
+# Only run this block if the patch is needed.
+- name: Copy update to managed node
+  when:
+    - is_patch_needed
+  block:
+    - name: Create temp folder on target
+      ansible.windows.win_file:
+        path: "{{ sql_patch_temp_folder }}"
+        state: directory
+
+    - name: Create the updates folder in temp on target
+      ansible.windows.win_file:
+        path: "{{ sql_patch_temp_folder }}\\updates"
+        state: directory
+
+    - name: Copy patch
+      ansible.windows.win_copy:
+        src: "{{ sql_patch_source }}{{ sql_patch_filename }}"
+        dest: "{{ sql_patch_temp_folder }}\\updates"
+        remote_src: true

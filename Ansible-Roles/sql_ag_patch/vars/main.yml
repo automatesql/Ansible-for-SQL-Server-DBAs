@@ -1,0 +1,4 @@
+---
+# vars file for sql_ag_patch
+# sql_instance_name: "DEFAULT"
+# sql_port: 1433

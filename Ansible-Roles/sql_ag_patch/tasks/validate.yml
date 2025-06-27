@@ -1,0 +1,57 @@
+---
+- name: Check AG state on primary
+  when:
+    - (sql_ag_failback | bool and ag_current_primary == server_instance) or (new_primary == server_instance) # only run this validation step on the primary
+  block:
+    - name: Get AG state
+      ansible.windows.win_powershell:
+        script: |
+          [CmdletBinding()]
+          param(
+            [Parameter(Mandatory=$true)]
+            [string]$SqlInstanceName,
+
+            [Parameter(Mandatory=$true)]
+            [string]$AgName
+          )
+
+          import-module SqlServer
+          (Test-SqlAvailabilityGroup -Path "SQLSERVER:\Sql\LOCALHOST\$SqlInstanceName\AvailabilityGroups\$AgName" -ErrorAction Stop).HealthState
+          $Ansible.Changed = $false
+        parameters:
+          SqlInstanceName: "{{ sql_instance_name }}"
+          AgName: "{{ ag_name }}"
+      register: validation_result
+      delay: 30
+      retries: 4
+      until: validation_result.output[0] == "Healthy"
+
+    - name: Verify the AG is in a healthy state
+      ansible.builtin.assert:
+        that:
+          - validation_result.output[0] == "Healthy"
+        fail_msg: >-
+          Review the {{ ag_name }} availability group state.  Current state is {{ validation_result.output[0] }}.
+        success_msg: >-
+          "{{ ag_name }} is {{ validation_result.output[0] }}."
+
+
+- name: Get final SQL Server version
+  ansible.windows.win_powershell:
+    script: "{{ lookup('file', 'get_sqlversion.ps1') }}"
+    parameters:
+      ServerInstance: "{{ server_instance }}"
+  register: final_sql_version_info
+  when:
+    - post_validation
+
+- name: Verify the final version equals the desired version
+  ansible.builtin.assert:
+    that:
+      - final_sql_version_info.output[0] == desired_sql_version
+    fail_msg: >-
+      Review the {{ server_instance }} instance. Expected version: {{ desired_sql_version }}. Final version: {{ final_sql_version_info.output[0] }}
+    success_msg: >-
+      "{{ server_instance }} has been patched to the desired version: {{ final_sql_version_info.output[0] }}"
+  when:
+    - post_validation
